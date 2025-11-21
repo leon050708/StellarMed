@@ -35,6 +35,12 @@
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
+        <!-- MyBatis-Plus 注解支持（仅用于实体类注解，provided scope） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-annotation</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>

@@ -72,6 +72,34 @@ public class PatientController {
     }
 
     /**
+     * AI对话：与患者进行实时对话
+     * @param sessionId 会话ID
+     * @param patientId 患者ID
+     * @param question 患者问题
+     * @return AI回复
+     */
+    @PostMapping("/chat")
+    public ApiResponse<String> chatWithAi(
+            @RequestParam Integer sessionId,
+            @RequestParam Integer patientId,
+            @RequestParam String question) {
+        String reply = chatService.chatWithAi(sessionId, patientId, question);
+        return ApiResponse.success(reply);
+    }
+
+    /**
+     * 获取对话历史
+     * @param sessionId 会话ID
+     * @return 对话记录列表
+     */
+    @GetMapping("/chat/history/{sessionId}")
+    public ApiResponse<java.util.List<com.assist.common.entity.ChatRecord>> getChatHistory(
+            @PathVariable Integer sessionId) {
+        java.util.List<com.assist.common.entity.ChatRecord> history = chatService.getChatHistory(sessionId);
+        return ApiResponse.success(history);
+    }
+
+    /**
      * 记录原始症状
      */
     @PostMapping("/symptoms")
