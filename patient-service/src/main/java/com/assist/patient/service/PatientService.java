@@ -1,0 +1,19 @@
+package com.assist.patient.service;
+
+import com.assist.common.entity.Patient;
+
+/**
+ * 患者服务接口
+ */
+public interface PatientService {
+    /**
+     * 创建或更新患者
+     */
+    Integer createOrUpdate(Patient patient);
+
+    /**
+     * 根据病例号查询患者
+     */
+    Patient getByCaseNumber(String caseNumber);
+}
+
