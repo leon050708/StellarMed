@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: test-suggestion-ai-service
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8080
+        file-extension: yaml
+        namespace: dev
+        group: DEFAULT_GROUP
+
