@@ -62,7 +62,7 @@ public class TestSuggestionServiceImpl implements TestSuggestionService {
         TestSuggestionResponse response = new TestSuggestionResponse();
         
         try {
-            // 1. 从数据库获取相关信息
+            // 1. 从数据库获取相关信息（先获取，用于判断数据是否有更新）
             List<AiSymptomStructured> symptoms = symptomMapper.selectBySessionId(request.getSessionId());
             List<AiPreDiagnosis> diagnoses = diagnosisMapper.selectBySessionId(request.getSessionId());
             List<AiRiskAssessment> risks = riskMapper.selectBySessionId(request.getSessionId());
@@ -78,19 +78,59 @@ public class TestSuggestionServiceImpl implements TestSuggestionService {
                 return response;
             }
             
-            // 3. 构造 AI Prompt
+            // 3. 检查该 session 是否已有检查建议，并判断数据是否有更新
+            List<AiTestSuggestion> existingSuggestions = testSuggestionMapper.selectBySessionId(request.getSessionId());
+            if (!existingSuggestions.isEmpty()) {
+                // 获取检查建议的最新创建时间
+                Date suggestionLatestTime = testSuggestionMapper.getLatestCreateTime(request.getSessionId());
+                
+                // 获取症状/诊断/风险评估的最新更新时间
+                Date symptomLatestTime = symptomMapper.getLatestUpdateTime(request.getSessionId());
+                Date diagnosisLatestTime = diagnosisMapper.getLatestUpdateTime(request.getSessionId());
+                Date riskLatestTime = riskMapper.getLatestUpdateTime(request.getSessionId());
+                
+                // 找出数据的最新更新时间
+                Date dataLatestTime = null;
+                if (symptomLatestTime != null) {
+                    dataLatestTime = symptomLatestTime;
+                }
+                if (diagnosisLatestTime != null && 
+                    (dataLatestTime == null || diagnosisLatestTime.after(dataLatestTime))) {
+                    dataLatestTime = diagnosisLatestTime;
+                }
+                if (riskLatestTime != null && 
+                    (dataLatestTime == null || riskLatestTime.after(dataLatestTime))) {
+                    dataLatestTime = riskLatestTime;
+                }
+                
+                // 如果检查建议的时间 >= 数据的最新更新时间，说明数据没有更新，返回已有数据
+                if (suggestionLatestTime != null && dataLatestTime != null && 
+                    !suggestionLatestTime.before(dataLatestTime)) {
+                    log.info("ℹ️ 该 session 已存在 {} 条检查建议，且数据未更新，返回已有数据", existingSuggestions.size());
+                    response.setTestSuggestions(existingSuggestions);
+                    response.setMessage("已存在检查建议，返回已有数据");
+                    return response;
+                } else {
+                    // 数据有更新，删除旧的检查建议，重新生成
+                    log.info("🔄 检测到症状/诊断数据有更新，删除旧的检查建议，重新生成");
+                    int deletedCount = testSuggestionMapper.deleteBySessionId(request.getSessionId());
+                    log.info("🗑️ 已删除 {} 条旧的检查建议", deletedCount);
+                }
+            }
+            
+            // 4. 构造 AI Prompt
             String prompt = buildPrompt(symptoms, diagnoses, risks);
             log.debug("📝 构造的 Prompt: \n{}", prompt);
             
-            // 4. 调用 AI 模型
+            // 5. 调用 AI 模型
             String aiResponse = callAiModel(prompt);
             log.info("🤖 AI 模型返回结果: {}", aiResponse);
             
-            // 5. 解析 AI 返回结果
+            // 6. 解析 AI 返回结果
             List<TestSuggestionDto> aiSuggestions = parseAiResponse(aiResponse);
             log.info("✅ 解析成功，获得 {} 条检查建议", aiSuggestions.size());
             
-            // 6. 保存到数据库
+            // 7. 保存到数据库
             List<AiTestSuggestion> entities = new ArrayList<>();
             for (TestSuggestionDto dto : aiSuggestions) {
                 AiTestSuggestion entity = new AiTestSuggestion();
@@ -107,7 +147,7 @@ public class TestSuggestionServiceImpl implements TestSuggestionService {
                 log.info("💾 已保存 {} 条检查建议到数据库", entities.size());
             }
             
-            // 7. 构造响应
+            // 8. 构造响应
             response.setTestSuggestions(entities);
             response.setMessage("检查建议生成成功");
             
@@ -134,6 +174,32 @@ public class TestSuggestionServiceImpl implements TestSuggestionService {
         } catch (Exception e) {
             log.error("❌ 查询检查建议失败", e);
             response.setMessage("查询失败: " + e.getMessage());
+            response.setTestSuggestions(new ArrayList<>());
+        }
+        
+        return response;
+    }
+    
+    @Override
+    @Transactional
+    public TestSuggestionResponse regenerateTestSuggestions(TestSuggestionRequest request) {
+        log.info("🔄 重新生成检查建议，patientId: {}, sessionId: {}", 
+                request.getPatientId(), request.getSessionId());
+        
+        TestSuggestionResponse response = new TestSuggestionResponse();
+        
+        try {
+            // 1. 删除该 session 的旧检查建议
+            int deletedCount = testSuggestionMapper.deleteBySessionId(request.getSessionId());
+            log.info("🗑️ 已删除 {} 条旧的检查建议", deletedCount);
+            
+            // 2. 调用生成方法（此时不会有旧数据，会直接生成新的）
+            response = generateTestSuggestions(request);
+            response.setMessage("检查建议已重新生成");
+            
+        } catch (Exception e) {
+            log.error("❌ 重新生成检查建议失败", e);
+            response.setMessage("重新生成检查建议失败: " + e.getMessage());
             response.setTestSuggestions(new ArrayList<>());
         }
         

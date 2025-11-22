@@ -78,6 +78,37 @@ public class TestSuggestionController {
     }
     
     /**
+     * 重新生成检查建议（删除旧的，生成新的）
+     * 用于症状/诊断更新后需要重新生成检查建议的场景
+     * 
+     * @param request 请求参数
+     * @return 检查建议响应
+     */
+    @PostMapping("/regenerate")
+    public ApiResponse<TestSuggestionResponse> regenerateTestSuggestions(
+            @RequestBody @Validated TestSuggestionRequest request) {
+        
+        log.info("🔄 收到重新生成检查建议请求: patientId={}, sessionId={}", 
+                request.getPatientId(), request.getSessionId());
+        
+        try {
+            TestSuggestionResponse response = testSuggestionService.regenerateTestSuggestions(request);
+            
+            if (response.getTestSuggestions() != null && !response.getTestSuggestions().isEmpty()) {
+                log.info("✅ 检查建议重新生成成功，共 {} 条", response.getTestSuggestions().size());
+                return ApiResponse.success(response);
+            } else {
+                log.warn("⚠️ 未生成任何检查建议");
+                return ApiResponse.error(response.getMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 重新生成检查建议失败", e);
+            return ApiResponse.error("重新生成检查建议失败: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 健康检查接口
      * 
      * @return 健康状态

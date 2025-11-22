@@ -13,9 +13,17 @@ import org.springframework.web.bind.annotation.RequestBody;
  * Test Suggestion AI Service Feign 客户端接口
  * 供其他服务调用本服务的接口
  * 
+ * 配置说明：
+ * - name: 服务名，通过 Nacos 服务发现自动解析
+ * - path: API 路径前缀
+ * - 已启用 Nacos，会自动通过服务发现调用（端口 8848）
+ * 
  * @author StellarMed Team
  */
-@FeignClient(name = "test-suggestion-ai-service", path = "/api/ai/test-suggestions")
+@FeignClient(
+    name = "test-suggestion-ai-service", 
+    path = "/api/ai/test-suggestions"
+)
 public interface TestSuggestionFeignClient {
     
     /**
@@ -35,5 +43,15 @@ public interface TestSuggestionFeignClient {
      */
     @GetMapping("/session/{sessionId}")
     ApiResponse<TestSuggestionResponse> getTestSuggestionsBySessionId(@PathVariable Integer sessionId);
+    
+    /**
+     * 重新生成检查建议（删除旧的，生成新的）
+     * 用于症状/诊断更新后需要重新生成检查建议的场景
+     * 
+     * @param request 请求参数
+     * @return 检查建议响应
+     */
+    @PostMapping("/regenerate")
+    ApiResponse<TestSuggestionResponse> regenerateTestSuggestions(@RequestBody TestSuggestionRequest request);
 }
 

@@ -5,9 +5,9 @@ spring:
   application:
     name: test-suggestion-ai-service
   
-  # Nacos 配置导入（已禁用，用于测试）
-  # config:
-  #   import: optional:nacos:test-suggestion-ai-service.yaml
+  # Nacos 配置导入
+  config:
+    import: optional:nacos:test-suggestion-ai-service.yaml
   
   # 数据库配置
   datasource:
@@ -16,20 +16,26 @@ spring:
     username: root
     password: mysql_awJcEH
   
-  # Nacos服务发现（已禁用，用于测试）
+  # Nacos服务发现和配置中心
   cloud:
     nacos:
       discovery:
-        enabled: false  # 禁用服务发现
-        server-addr: localhost:8080
-        namespace: dev
+        enabled: true  # 启用服务发现
+        server-addr: localhost:8848  # Nacos 核心 API 端口（Java 客户端连接）
+        namespace: public  # 使用 public 命名空间（如果 dev 不存在）
         group: DEFAULT_GROUP
+        # 鉴权已关闭，不需要配置用户名密码
+        # 注册配置
+        register-enabled: true  # 确保启用注册
+        ip:  # 留空，自动获取
+        port: 8084  # 服务端口
       config:
-        enabled: false  # 禁用配置中心
-        server-addr: localhost:8080
+        enabled: true  # 启用配置中心
+        server-addr: localhost:8848  # Nacos 核心 API 端口
         file-extension: yaml
         namespace: dev
         group: DEFAULT_GROUP
+        # 鉴权已关闭，不需要配置用户名密码
   
   # SpringAI - 通义千问配置
   ai:
@@ -57,6 +63,9 @@ logging:
   level:
     com.neusoft.neu23: debug
     com.assist.common: debug
+    com.alibaba.cloud.nacos: debug  # Nacos 相关日志
+    com.alibaba.nacos: debug  # Nacos 客户端日志
+    org.springframework.cloud: debug  # Spring Cloud 日志
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
 

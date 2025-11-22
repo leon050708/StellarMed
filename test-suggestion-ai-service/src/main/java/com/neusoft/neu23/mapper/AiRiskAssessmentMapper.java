@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -24,5 +25,14 @@ public interface AiRiskAssessmentMapper extends BaseMapper<AiRiskAssessment> {
      */
     @Select("SELECT * FROM ai_risk_assessment WHERE session_id = #{sessionId} ORDER BY created_time DESC")
     List<AiRiskAssessment> selectBySessionId(@Param("sessionId") Integer sessionId);
+    
+    /**
+     * 获取该 session 最新风险评估的更新时间
+     * 
+     * @param sessionId 会话ID
+     * @return 最新更新时间，如果没有则返回 null
+     */
+    @Select("SELECT MAX(created_time) FROM ai_risk_assessment WHERE session_id = #{sessionId}")
+    Date getLatestUpdateTime(@Param("sessionId") Integer sessionId);
 }
 

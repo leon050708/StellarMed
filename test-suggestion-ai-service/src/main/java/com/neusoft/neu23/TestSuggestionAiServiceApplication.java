@@ -16,7 +16,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
     "com.neusoft.neu23",
     "com.assist.common"
 })
-// @EnableDiscoveryClient 已禁用，用于测试（不连接 Nacos）
+@EnableDiscoveryClient  // 启用服务发现，注册到 Nacos
 @EnableFeignClients  // 启用 Feign 客户端
 @MapperScan("com.neusoft.neu23.mapper")
 public class TestSuggestionAiServiceApplication {

@@ -26,5 +26,14 @@ public interface TestSuggestionService {
      * @return 检查建议响应
      */
     TestSuggestionResponse getTestSuggestionsBySessionId(Integer sessionId);
+    
+    /**
+     * 重新生成检查建议（删除旧的，生成新的）
+     * 用于症状/诊断更新后需要重新生成检查建议的场景
+     * 
+     * @param request 请求参数（patientId, sessionId）
+     * @return 检查建议响应
+     */
+    TestSuggestionResponse regenerateTestSuggestions(TestSuggestionRequest request);
 }
 

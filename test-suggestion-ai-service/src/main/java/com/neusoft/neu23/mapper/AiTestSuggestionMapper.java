@@ -4,7 +4,9 @@ import com.assist.common.entity.AiTestSuggestion;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,5 +40,22 @@ public interface AiTestSuggestionMapper extends BaseMapper<AiTestSuggestion> {
      * @return 插入数量
      */
     int batchInsert(@Param("list") List<AiTestSuggestion> suggestions);
+    
+    /**
+     * 根据 sessionId 删除检查建议
+     * 
+     * @param sessionId 会话ID
+     * @return 删除数量
+     */
+    int deleteBySessionId(@Param("sessionId") Integer sessionId);
+    
+    /**
+     * 获取该 session 最新检查建议的创建时间
+     * 
+     * @param sessionId 会话ID
+     * @return 最新创建时间，如果没有则返回 null
+     */
+    @Select("SELECT MAX(created_time) FROM ai_test_suggestion WHERE session_id = #{sessionId}")
+    Date getLatestCreateTime(@Param("sessionId") Integer sessionId);
 }
 

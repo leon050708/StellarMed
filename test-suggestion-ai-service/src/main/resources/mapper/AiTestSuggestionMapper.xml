@@ -48,5 +48,11 @@
         </foreach>
     </insert>
 
+    <!-- 根据 sessionId 删除 -->
+    <delete id="deleteBySessionId">
+        DELETE FROM ai_test_suggestion
+        WHERE session_id = #{sessionId}
+    </delete>
+
 </mapper>
 
