@@ -4,6 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * Test Suggestion AI Service 主启动类
@@ -16,6 +17,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
     "com.assist.common"
 })
 // @EnableDiscoveryClient 已禁用，用于测试（不连接 Nacos）
+@EnableFeignClients  // 启用 Feign 客户端
 @MapperScan("com.neusoft.neu23.mapper")
 public class TestSuggestionAiServiceApplication {
     
