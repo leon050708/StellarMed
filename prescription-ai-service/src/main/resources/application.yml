@@ -29,11 +29,6 @@ spring:
     init:
       enabled: false
 
-  # OKHttp 连接池配置（用于 OpenFeign）
-  okhttp:
-    max-idle-connections: 200     # 最大空闲连接数
-    keep-alive-duration: 300      # 连接保持时间（秒，默认 5 分钟）
-
   # SpringAI 通义千问（DashScope）配置
   ai:
     dashscope:
