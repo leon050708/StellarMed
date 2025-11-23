@@ -23,7 +23,7 @@ spring:
         fail-fast: false # 即使 Nacos 不可用也不快速失败，允许服务启动
   ai:
     openai:
-      api-key: sk-378f8cafa6db4ce38f730b15a69429cc
+      api-key:
       base-url: https://dashscope.aliyuncs.com/compatible-mode/
       chat:
         options:

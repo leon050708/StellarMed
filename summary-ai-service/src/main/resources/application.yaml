@@ -30,7 +30,7 @@ spring:
         ip-delete-timeout: 30000 # IP删除超时（毫秒）
   ai:
     openai:
-      api-key: sk-378f8cafa6db4ce38f730b15a69429cc
+      api-key:
       base-url: https://dashscope.aliyuncs.com/compatible-mode/
       chat:
         options:
