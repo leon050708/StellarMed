@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,6 +42,7 @@ public class SymptomExtractServiceImpl implements SymptomExtractService {
     }
 
     @Override
+    @Transactional
     public SymptomExtractResponse extractStructuredSymptoms(SymptomExtractRequest request) {
         log.info("开始提取结构化症状，patientId: {}, sessionId: {}", 
                 request.getPatientId(), request.getSessionId());
@@ -144,6 +146,8 @@ public class SymptomExtractServiceImpl implements SymptomExtractService {
             // 保存每个症状
             for (java.util.Map<String, Object> symptomMap : symptomList) {
                 AiSymptomStructured symptom = new AiSymptomStructured();
+                // 确保 ID 为 null，让数据库自动生成
+                symptom.setId(null);
                 symptom.setPatientId(request.getPatientId());
                 symptom.setSessionId(request.getSessionId());
                 symptom.setSymptomName((String) symptomMap.get("symptomName"));
@@ -153,7 +157,9 @@ public class SymptomExtractServiceImpl implements SymptomExtractService {
                         symptomMap.get("extraInfo").toString() : "");
                 symptom.setCreateTime(new java.util.Date());
                 
+                // 插入后，MyBatis-Plus 会自动回填生成的 ID
                 aiSymptomStructuredMapper.insert(symptom);
+                log.debug("保存症状成功，生成的ID: {}", symptom.getId());
                 symptoms.add(symptom);
             }
             

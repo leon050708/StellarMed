@@ -3,14 +3,13 @@ package com.neusoft.neu23.service.impl;
 import com.assist.common.common.ApiResponse;
 import com.assist.common.common.BusinessException;
 import com.assist.common.common.ErrorCode;
-import com.assist.common.dto.request.*;
-import com.assist.common.dto.response.*;
+import com.assist.common.dto.request.DoctorFinalConfirmRequest;
+import com.assist.common.dto.response.AiAggregatedReport;
 import com.assist.common.entity.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.neusoft.neu23.mapper.DoctorFinalDiagnosisMapper;
+import com.neusoft.neu23.mapper.*;
 import com.neusoft.neu23.service.DoctorConfirmService;
-import com.neusoft.neu23.tc.client.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 医生最终确认服务实现
@@ -28,9 +26,13 @@ import java.util.Optional;
 @Slf4j
 public class DoctorConfirmServiceImpl implements DoctorConfirmService {
 
-    private final SummaryAiClient summaryAiClient;
-    private final PrescriptionAiClient prescriptionAiClient;
     private final DoctorFinalDiagnosisMapper diagnosisMapper;
+    private final AiSymptomStructuredMapper symptomMapper;
+    private final AiPreDiagnosisMapper preDiagnosisMapper;
+    private final AiRiskAssessmentMapper riskAssessmentMapper;
+    private final AiTestSuggestionMapper testSuggestionMapper;
+    private final AiSessionSummaryMapper sessionSummaryMapper;
+    private final AiPrescriptionMapper prescriptionMapper;
 
     @Override
     public AiAggregatedReport aggregateAssistReport(Integer patientId, Integer sessionId) {
@@ -45,27 +47,34 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
         report.setPatient(null);
         report.setSession(null);
         
-        // 调用服务 5（summary-ai-service）获取 2、3、4 的数据 + 总结
-        // 这样可以避免重复调用 2、3、4 服务，提高效率并保证数据一致性
-        com.assist.common.dto.response.SummaryWithDataResponse summaryWithData = callAndUnwrap(() -> 
-            summaryAiClient.generateWithData(patientId, sessionId), "summary-ai-service获取数据汇总");
+        // 从数据库读取所有AI输出数据
+        log.info("从数据库读取AI助诊数据，patientId={}, sessionId={}", patientId, sessionId);
         
-        if (summaryWithData != null) {
-            report.setSymptoms(safeList(summaryWithData.getSymptoms()));
-            report.setDiagnoses(safeList(summaryWithData.getDiagnoses()));
-            report.setRiskAssessment(summaryWithData.getRiskAssessment());
-            report.setTestSuggestions(safeList(summaryWithData.getTestSuggestions()));
-            report.setSessionSummary(summaryWithData.getSessionSummary());
-        }
+        List<AiSymptomStructured> symptoms = safeList(symptomMapper.selectBySessionId(sessionId));
+        log.debug("从数据库读取到 {} 条结构化症状", symptoms.size());
+        report.setSymptoms(symptoms);
         
-        // 调用服务 6（prescription-ai-service）获取处方建议
-        PrescriptionGenerateRequest prescriptionRequest = new PrescriptionGenerateRequest();
-        prescriptionRequest.setPatientId(patientId);
-        prescriptionRequest.setSessionId(sessionId);
-        PrescriptionGenerateResponse prescriptionResponse = callAndUnwrap(() -> 
-            prescriptionAiClient.generate(prescriptionRequest), "prescription-ai-service获取AI处方");
-        report.setPrescriptions(safeList(prescriptionResponse != null ? prescriptionResponse.getPrescriptions() : null));
+        List<AiPreDiagnosis> diagnoses = safeList(preDiagnosisMapper.selectBySessionId(sessionId));
+        log.debug("从数据库读取到 {} 条初步诊断", diagnoses.size());
+        report.setDiagnoses(diagnoses);
         
+        AiRiskAssessment riskAssessment = riskAssessmentMapper.selectBySessionId(sessionId);
+        log.debug("从数据库读取风险评估: {}", riskAssessment != null ? "有数据" : "无数据");
+        report.setRiskAssessment(riskAssessment);
+        
+        List<AiTestSuggestion> testSuggestions = safeList(testSuggestionMapper.selectBySessionId(sessionId));
+        log.debug("从数据库读取到 {} 条检查建议", testSuggestions.size());
+        report.setTestSuggestions(testSuggestions);
+        
+        AiSessionSummary sessionSummary = sessionSummaryMapper.selectBySessionId(sessionId);
+        log.debug("从数据库读取会话总结: {}", sessionSummary != null ? "有数据" : "无数据");
+        report.setSessionSummary(sessionSummary);
+        
+        List<AiPrescription> prescriptions = safeList(prescriptionMapper.selectBySessionId(sessionId));
+        log.debug("从数据库读取到 {} 条处方建议", prescriptions.size());
+        report.setPrescriptions(prescriptions);
+        
+        log.info("AI助诊数据聚合完成，sessionId={}", sessionId);
         return report;
     }
 
@@ -99,38 +108,11 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             diagnosisMapper.updateById(entity);
             log.info("医生最终确认结果已更新 sessionId={}", request.getSessionId());
         }
-        return ApiResponse.success("医生最终确认保存成功");
-    }
-
-    /**
-     * 通用调用封装，兼容空响应或错误码
-     */
-    private <T> T callAndUnwrap(ClientCaller<ApiResponse<T>> caller, String actionLabel) {
-        try {
-            ApiResponse<T> response = caller.invoke();
-            if (response == null) {
-                throw new BusinessException(ErrorCode.SERVICE_ERROR, actionLabel + "返回为空");
-            }
-            if (response.getCode() != 0) {
-                throw new BusinessException(ErrorCode.SERVICE_ERROR,
-                        actionLabel + "失败：" + Optional.ofNullable(response.getMsg()).orElse("未知错误"));
-            }
-            return response.getData();
-        } catch (BusinessException be) {
-            throw be;
-        } catch (Exception ex) {
-            log.error("{} 失败", actionLabel, ex);
-            throw new BusinessException(ErrorCode.SERVICE_ERROR, actionLabel + "异常：" + ex.getMessage());
-        }
+        return ApiResponse.successMsg("医生最终确认保存成功");
     }
 
     private <T> List<T> safeList(List<T> data) {
         return data == null ? List.of() : data;
-    }
-
-    @FunctionalInterface
-    private interface ClientCaller<T> {
-        T invoke();
     }
 }
 

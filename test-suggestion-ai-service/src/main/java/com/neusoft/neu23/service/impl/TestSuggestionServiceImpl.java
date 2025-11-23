@@ -1,6 +1,6 @@
 package com.neusoft.neu23.service.impl;
 
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import org.springframework.ai.openai.OpenAiChatModel;
 import com.assist.common.dto.request.TestSuggestionRequest;
 import com.assist.common.dto.response.TestSuggestionResponse;
 import com.assist.common.entity.AiPreDiagnosis;
@@ -37,7 +37,7 @@ import java.util.List;
 public class TestSuggestionServiceImpl implements TestSuggestionService {
     
     @Autowired
-    private DashScopeChatModel chatModel;
+    private OpenAiChatModel chatModel;
     
     @Autowired
     private AiTestSuggestionMapper testSuggestionMapper;

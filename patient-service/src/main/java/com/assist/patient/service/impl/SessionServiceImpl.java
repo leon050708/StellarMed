@@ -27,12 +27,14 @@ public class SessionServiceImpl implements SessionService {
         session.setCreatedTime(new Date());
         session.setStatus(SessionStatusEnum.ACTIVE.name());
         log.info("创建会话前，sessionId: {}", session.getSessionId());
-        sessionMapper.insert(session);
-        log.info("创建会话后，sessionId: {}", session.getSessionId());
+        
+        int insertResult = sessionMapper.insert(session);
+        log.info("插入会话结果: {}, 插入后 sessionId: {}", insertResult, session.getSessionId());
+        
         // 使用 @TableId 注解后，MyBatis-Plus 会自动回填 sessionId
         // 如果没有回填，需要手动查询
         if (session.getSessionId() == null) {
-            log.warn("sessionId 未自动回填，尝试手动查询");
+            log.warn("sessionId 未自动回填，尝试手动查询最新创建的会话");
             Session createdSession = sessionMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Session>()
                     .eq(Session::getPatientId, patientId)
@@ -40,11 +42,16 @@ public class SessionServiceImpl implements SessionService {
                     .orderByDesc(Session::getCreatedTime)
                     .last("LIMIT 1")
             );
-            if (createdSession != null) {
+            if (createdSession != null && createdSession.getSessionId() != null) {
                 log.info("手动查询到 sessionId: {}", createdSession.getSessionId());
                 return createdSession;
+            } else {
+                log.error("创建会话失败：无法获取 sessionId，patientId: {}", patientId);
+                throw new RuntimeException("创建会话失败：无法获取 sessionId");
             }
         }
+        
+        log.info("会话创建成功，sessionId: {}, patientId: {}", session.getSessionId(), patientId);
         return session;
     }
 

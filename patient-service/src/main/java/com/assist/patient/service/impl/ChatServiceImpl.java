@@ -1,7 +1,9 @@
 package com.assist.patient.service.impl;
 
 import com.assist.common.entity.ChatRecord;
+import com.assist.common.entity.Session;
 import com.assist.patient.mapper.ChatRecordMapper;
+import com.assist.patient.mapper.SessionMapper;
 import com.assist.patient.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -19,12 +21,15 @@ import java.util.List;
 public class ChatServiceImpl implements ChatService {
 
     private final ChatRecordMapper chatRecordMapper;
+    private final SessionMapper sessionMapper;
     private final ChatClient chatChatClient;
 
     public ChatServiceImpl(
             ChatRecordMapper chatRecordMapper,
+            SessionMapper sessionMapper,
             @Qualifier("chatChatClient") ChatClient chatChatClient) {
         this.chatRecordMapper = chatRecordMapper;
+        this.sessionMapper = sessionMapper;
         this.chatChatClient = chatChatClient;
     }
 
@@ -38,6 +43,20 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public String chatWithAi(Integer sessionId, Integer patientId, String question) {
         log.info("开始AI对话，sessionId: {}, patientId: {}, question: {}", sessionId, patientId, question);
+        
+        // 0. 验证 sessionId 是否存在
+        if (sessionId == null) {
+            log.error("sessionId 不能为空");
+            throw new IllegalArgumentException("sessionId 不能为空");
+        }
+        
+        // 验证 sessionId 是否存在于数据库中
+        Session session = sessionMapper.selectById(sessionId);
+        if (session == null) {
+            log.error("sessionId {} 不存在于数据库中，无法创建聊天记录", sessionId);
+            throw new IllegalArgumentException("会话不存在，请先创建会话");
+        }
+        log.debug("验证通过：sessionId {} 存在，patientId: {}", sessionId, session.getPatientId());
         
         // 1. 获取对话历史
         List<ChatRecord> chatHistory = chatRecordMapper.selectBySessionId(sessionId);

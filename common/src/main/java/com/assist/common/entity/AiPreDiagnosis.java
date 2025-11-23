@@ -1,5 +1,8 @@
 package com.assist.common.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -8,7 +11,9 @@ import java.util.Date;
  * AI 初步诊断实体类
  */
 @Data
+@TableName("ai_pre_diagnosis")
 public class AiPreDiagnosis {
+    @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private Integer patientId;
     private Integer sessionId;

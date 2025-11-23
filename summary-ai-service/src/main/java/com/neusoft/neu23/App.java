@@ -4,7 +4,6 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * AI问诊总结服务启动类
@@ -12,7 +11,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  */
 @SpringBootApplication(scanBasePackages = "com.assist, com.neusoft.neu23") // 扫描公共模块和当前服务包
 @EnableDiscoveryClient // 启用Nacos服务发现
-@EnableFeignClients(basePackages = "com.neusoft.neu23.tc.client") // 启用Feign客户端
 @MapperScan("com.neusoft.neu23.mapper") // 扫描MyBatis Mapper接口
 public class App {
     public static void main(String[] args) {

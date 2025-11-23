@@ -1,20 +1,11 @@
 package com.neusoft.neu23.service.impl;
 
 import com.assist.common.common.ApiResponse;
-import com.assist.common.dto.request.DiagnosisEvaluateRequest;
-import com.assist.common.dto.request.RiskEvaluateRequest;
-import com.assist.common.dto.request.SymptomExtractRequest;
-import com.assist.common.dto.request.TestSuggestionRequest;
-import com.assist.common.dto.response.DiagnosisEvaluateResponse;
-import com.assist.common.dto.response.RiskEvaluateResponse;
 import com.assist.common.dto.response.SummaryWithDataResponse;
-import com.assist.common.dto.response.SymptomExtractResponse;
-import com.assist.common.dto.response.TestSuggestionResponse;
 import com.assist.common.entity.*;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.neusoft.neu23.mapper.AiSessionSummaryMapper;
+import com.neusoft.neu23.mapper.*;
 import com.neusoft.neu23.service.SessionSummaryService;
-import com.neusoft.neu23.tc.client.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -24,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * 会话总结服务实现
@@ -34,10 +24,11 @@ import java.util.function.Supplier;
 @Slf4j
 public class SessionSummaryServiceImpl implements SessionSummaryService {
 
-    private final SymptomAiClient symptomAiClient;
-    private final DiagnosisAiClient diagnosisAiClient;
-    private final TestSuggestionAiClient testSuggestionAiClient;
     private final AiSessionSummaryMapper summaryMapper;
+    private final AiSymptomStructuredMapper symptomMapper;
+    private final AiPreDiagnosisMapper diagnosisMapper;
+    private final AiRiskAssessmentMapper riskAssessmentMapper;
+    private final AiTestSuggestionMapper testSuggestionMapper;
 
     private ChatClient chatClient;
 
@@ -88,30 +79,18 @@ public class SessionSummaryServiceImpl implements SessionSummaryService {
         try {
             log.info("开始生成会话总结，patientId={}, sessionId={}", patientId, sessionId);
 
-            // 1. 获取所有AI输出数据（仅调用 2、3、4 三个服务，使用 POST 方法）
-            SymptomExtractRequest symptomRequest = new SymptomExtractRequest();
-            symptomRequest.setPatientId(patientId);
-            symptomRequest.setSessionId(sessionId);
-            SymptomExtractResponse symptomResponse = callAndUnwrap(() -> symptomAiClient.extract(symptomRequest), "获取结构化症状");
-            List<AiSymptomStructured> symptoms = safeList(symptomResponse != null ? symptomResponse.getStructuredSymptoms() : null);
+            // 1. 从数据库读取所有AI输出数据
+            List<AiSymptomStructured> symptoms = safeList(symptomMapper.selectBySessionId(sessionId));
+            log.debug("从数据库读取到 {} 条结构化症状", symptoms.size());
             
-            DiagnosisEvaluateRequest diagnosisRequest = new DiagnosisEvaluateRequest();
-            diagnosisRequest.setPatientId(patientId);
-            diagnosisRequest.setSessionId(sessionId);
-            DiagnosisEvaluateResponse diagnosisResponse = callAndUnwrap(() -> diagnosisAiClient.evaluateDiagnosis(diagnosisRequest), "获取诊断结果");
-            List<AiPreDiagnosis> diagnoses = safeList(diagnosisResponse != null ? diagnosisResponse.getDiagnoses() : null);
+            List<AiPreDiagnosis> diagnoses = safeList(diagnosisMapper.selectBySessionId(sessionId));
+            log.debug("从数据库读取到 {} 条初步诊断", diagnoses.size());
             
-            RiskEvaluateRequest riskRequest = new RiskEvaluateRequest();
-            riskRequest.setPatientId(patientId);
-            riskRequest.setSessionId(sessionId);
-            RiskEvaluateResponse riskResponse = callAndUnwrap(() -> diagnosisAiClient.evaluateRisk(riskRequest), "获取风险评估");
-            AiRiskAssessment riskAssessment = riskResponse != null ? riskResponse.getRiskAssessment() : null;
+            AiRiskAssessment riskAssessment = riskAssessmentMapper.selectBySessionId(sessionId);
+            log.debug("从数据库读取风险评估: {}", riskAssessment != null ? "有数据" : "无数据");
             
-            TestSuggestionRequest testRequest = new TestSuggestionRequest();
-            testRequest.setPatientId(patientId);
-            testRequest.setSessionId(sessionId);
-            TestSuggestionResponse testResponse = callAndUnwrap(() -> testSuggestionAiClient.suggest(testRequest), "获取检查建议");
-            List<AiTestSuggestion> testSuggestions = safeList(testResponse != null ? testResponse.getTestSuggestions() : null);
+            List<AiTestSuggestion> testSuggestions = safeList(testSuggestionMapper.selectBySessionId(sessionId));
+            log.debug("从数据库读取到 {} 条检查建议", testSuggestions.size());
 
             // 2. 构建提示词
             String prompt = buildSummaryPrompt(symptoms, diagnoses, riskAssessment, testSuggestions);
@@ -184,30 +163,18 @@ public class SessionSummaryServiceImpl implements SessionSummaryService {
         try {
             log.info("开始生成会话总结（含原始数据），patientId={}, sessionId={}", patientId, sessionId);
 
-            // 1. 获取所有AI输出数据（仅调用 2、3、4 三个服务，使用 POST 方法）
-            SymptomExtractRequest symptomRequest = new SymptomExtractRequest();
-            symptomRequest.setPatientId(patientId);
-            symptomRequest.setSessionId(sessionId);
-            SymptomExtractResponse symptomResponse = callAndUnwrap(() -> symptomAiClient.extract(symptomRequest), "获取结构化症状");
-            List<AiSymptomStructured> symptoms = safeList(symptomResponse != null ? symptomResponse.getStructuredSymptoms() : null);
+            // 1. 从数据库读取所有AI输出数据
+            List<AiSymptomStructured> symptoms = safeList(symptomMapper.selectBySessionId(sessionId));
+            log.debug("从数据库读取到 {} 条结构化症状", symptoms.size());
             
-            DiagnosisEvaluateRequest diagnosisRequest = new DiagnosisEvaluateRequest();
-            diagnosisRequest.setPatientId(patientId);
-            diagnosisRequest.setSessionId(sessionId);
-            DiagnosisEvaluateResponse diagnosisResponse = callAndUnwrap(() -> diagnosisAiClient.evaluateDiagnosis(diagnosisRequest), "获取诊断结果");
-            List<AiPreDiagnosis> diagnoses = safeList(diagnosisResponse != null ? diagnosisResponse.getDiagnoses() : null);
+            List<AiPreDiagnosis> diagnoses = safeList(diagnosisMapper.selectBySessionId(sessionId));
+            log.debug("从数据库读取到 {} 条初步诊断", diagnoses.size());
             
-            RiskEvaluateRequest riskRequest = new RiskEvaluateRequest();
-            riskRequest.setPatientId(patientId);
-            riskRequest.setSessionId(sessionId);
-            RiskEvaluateResponse riskResponse = callAndUnwrap(() -> diagnosisAiClient.evaluateRisk(riskRequest), "获取风险评估");
-            AiRiskAssessment riskAssessment = riskResponse != null ? riskResponse.getRiskAssessment() : null;
+            AiRiskAssessment riskAssessment = riskAssessmentMapper.selectBySessionId(sessionId);
+            log.debug("从数据库读取风险评估: {}", riskAssessment != null ? "有数据" : "无数据");
             
-            TestSuggestionRequest testRequest = new TestSuggestionRequest();
-            testRequest.setPatientId(patientId);
-            testRequest.setSessionId(sessionId);
-            TestSuggestionResponse testResponse = callAndUnwrap(() -> testSuggestionAiClient.suggest(testRequest), "获取检查建议");
-            List<AiTestSuggestion> testSuggestions = safeList(testResponse != null ? testResponse.getTestSuggestions() : null);
+            List<AiTestSuggestion> testSuggestions = safeList(testSuggestionMapper.selectBySessionId(sessionId));
+            log.debug("从数据库读取到 {} 条检查建议", testSuggestions.size());
 
             // 2. 构建提示词并生成总结
             String prompt = buildSummaryPrompt(symptoms, diagnoses, riskAssessment, testSuggestions);
@@ -424,23 +391,6 @@ public class SessionSummaryServiceImpl implements SessionSummaryService {
             chain.append("风险评估数据；");
         }
         return chain.toString();
-    }
-
-    /**
-     * 安全调用并解包ApiResponse
-     */
-    private <T> T callAndUnwrap(Supplier<ApiResponse<T>> supplier, String operation) {
-        try {
-            ApiResponse<T> response = supplier.get();
-            if (response == null || response.getCode() != 0) {
-                log.warn("{}失败，响应：{}", operation, response);
-                return null;
-            }
-            return response.getData();
-        } catch (Exception e) {
-            log.error("{}异常", operation, e);
-            return null;
-        }
     }
 
     /**

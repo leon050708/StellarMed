@@ -46,6 +46,9 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   mapper-locations: classpath*:/mapper/**/*.xml
   type-aliases-package: com.assist.common.entity
+  global-config:
+    db-config:
+      id-type: auto  # 全局使用数据库自增 ID
 
 logging:
   level:
