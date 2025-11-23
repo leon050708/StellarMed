@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.neusoft.neu23.mapper.AiTestSuggestionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.assist.common.entity.AiTestSuggestion">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="patient_id" property="patientId" jdbcType="INTEGER"/>
+        <result column="session_id" property="sessionId" jdbcType="INTEGER"/>
+        <result column="test_name" property="testName" jdbcType="VARCHAR"/>
+        <result column="reason" property="reason" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, patient_id, session_id, test_name, reason, created_time
+    </sql>
+
+    <!-- 根据 sessionId 查询 -->
+    <select id="selectBySessionId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ai_test_suggestion
+        WHERE session_id = #{sessionId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据 patientId 查询 -->
+    <select id="selectByPatientId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ai_test_suggestion
+        WHERE patient_id = #{patientId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ai_test_suggestion
+        (patient_id, session_id, test_name, reason, created_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.patientId}, #{item.sessionId}, #{item.testName}, 
+             #{item.reason}, #{item.createdTime})
+        </foreach>
+    </insert>
+
+    <!-- 根据 sessionId 删除 -->
+    <delete id="deleteBySessionId">
+        DELETE FROM ai_test_suggestion
+        WHERE session_id = #{sessionId}
+    </delete>
+
+</mapper>
+
