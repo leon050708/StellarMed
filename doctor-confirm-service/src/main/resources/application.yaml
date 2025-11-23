@@ -1,0 +1,65 @@
+server:
+  port: 8301
+
+spring:
+  application:
+    name: doctor-confirm-service # 必须先声明服务名
+  config:
+    import: "optional:nacos:" # 满足检查要求，使用 optional 前缀
+  sql:
+    init:
+      mode: never # 禁用数据库初始化，避免 DatabaseInitializationDependencyConfigurer 检查 Mapper
+  cloud:
+    loadbalancer:
+      enabled: true # 启用负载均衡器
+    nacos:
+      config:
+        enabled: false # 禁用 Nacos 配置中心
+        import-check:
+          enabled: false # 禁用配置导入检查
+      discovery:
+        server-addr: localhost:8848 # Nacos 服务发现地址
+        enabled: true # 启用服务发现（Feign 需要）
+        fail-fast: false # 即使 Nacos 不可用也不快速失败，允许服务启动
+  ai:
+    openai:
+      api-key:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/
+      chat:
+        options:
+          model: qwen-flash
+          temperature: 0.8
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://82.157.188.65:2000/pool2?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: mysql_awJcEH
+    type: com.alibaba.druid.pool.DruidDataSource
+
+logging:
+  level:
+    root: debug
+    org.springframework.ai.chat.client: error
+    com.neusoft.neu23.mapper: debug
+
+mybatis-plus:
+  type-aliases-package: com.assist.common.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      table-underline: true
+      # 表名映射：DoctorFinalDiagnosis -> doctor_final_diagnosis (MyBatis-Plus 默认会自动转换)
+
+# Feign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000 # 连接超时时间（毫秒）
+        readTimeout: 10000 # 读取超时时间（毫秒）
+        loggerLevel: basic # 日志级别
+  hystrix:
+    enabled: false # 禁用 Hystrix（如果不需要熔断）
+  circuitbreaker:
+    enabled: false # 禁用断路器（如果不需要）

@@ -5,6 +5,7 @@ import java.util.Date;
 
 /**
  * 医生最终确认诊断实体类
+ * 对应数据库表：doctor_final_diagnosis
  */
 @Data
 public class DoctorFinalDiagnosis {
@@ -17,4 +18,3 @@ public class DoctorFinalDiagnosis {
     private String comment;
     private Date createdTime;
 }
-
