@@ -1,0 +1,53 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: prescription-ai-service
+
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        server-addr: localhost:8848
+      config:
+        enabled: false
+        server-addr: localhost:8848
+        file-extension: yaml
+
+  config:
+    import: "optional:nacos:application-${spring.application.name}.yaml"
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://82.157.188.65:2000/pool2?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: mysql_awJcEH
+
+  # 关闭 Spring Boot 自动执行 schema.sql / data.sql 初始化，避免与 MyBatis-Plus Mapper 冲突
+  sql:
+    init:
+      enabled: false
+
+  # SpringAI 通义千问（DashScope）配置
+  ai:
+    dashscope:
+      # DashScope API Key（生产环境建议通过环境变量配置）
+      api-key: sk-a37dc4727cd7419783e5daf1c7e65b6b
+      chat:
+        options:
+          model: qwen-plus
+          temperature: 0.7
+          top-p: 0.8
+
+mybatis-plus:
+  type-aliases-package: com.assist.common.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 主键策略：AUTO 表示数据库自增
+      id-type: auto
+      # 表名下划线命名
+      table-underline: true
