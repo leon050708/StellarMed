@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="das://12c41bed-9f92-4b29-b012-9d0f461824e5/schema/pool2/table/ai_pre_diagnosis.sql" value="12c41bed-9f92-4b29-b012-9d0f461824e5" />
+    <file url="das://12c41bed-9f92-4b29-b012-9d0f461824e5/schema/pool2/table/ai_prescription.sql" value="12c41bed-9f92-4b29-b012-9d0f461824e5" />
+  </component>
+</project>

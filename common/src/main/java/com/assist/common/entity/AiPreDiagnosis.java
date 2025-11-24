@@ -10,6 +10,7 @@ import java.util.Date;
  * AI 初步诊断实体类
  */
 @Data
+@TableName("ai_pre_diagnosis")
 public class AiPreDiagnosis {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;

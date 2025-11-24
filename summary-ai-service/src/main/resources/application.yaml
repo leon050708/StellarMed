@@ -1,0 +1,90 @@
+server:
+  port: 8204
+
+spring:
+  application:
+    name: summary-ai-service # 服务名，用于服务发现
+  config:
+    import: "optional:nacos:application-${spring.profiles.active:default}.yml"
+  sql:
+    init:
+      mode: never # 禁用数据库初始化
+  cloud:
+    loadbalancer:
+      enabled: true # 启用负载均衡器
+    nacos:
+      config:
+        enabled: false # 禁用 Nacos 配置中心
+        import-check:
+          enabled: false # 禁用配置导入检查
+      discovery:
+        server-addr: localhost:8848 # Nacos 服务发现地址
+        enabled: true # 启用服务发现
+        fail-fast: false # 即使 Nacos 不可用也不快速失败，允许服务启动
+        watch:
+          enabled: true # 启用服务监听
+        namespace: public # 指定命名空间
+        group: DEFAULT_GROUP # 默认组
+        heart-beat-interval: 5000 # 心跳间隔（毫秒）
+        heart-beat-timeout: 15000 # 心跳超时（毫秒）
+        ip-delete-timeout: 30000 # IP删除超时（毫秒）
+  ai:
+    openai:
+      api-key: sk-45be1e34b677429db3a614c91fc07f2b
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/
+      chat:
+        options:
+          model: qwen-flash
+          temperature: 0.8
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://82.157.188.65:2000/pool2?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&connectTimeout=5000&socketTimeout=5000
+    username: root
+    password: mysql_awJcEH
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 1
+      min-idle: 1
+      max-active: 5
+      max-wait: 3000
+      test-on-borrow: false
+      test-while-idle: true
+      validation-query: SELECT 1
+      connection-timeout: 5000
+      socket-timeout: 5000
+
+logging:
+  level:
+    root: info
+    org.springframework.ai.chat.client: error
+    com.neusoft.neu23.mapper: debug
+    com.alibaba.cloud.nacos: warn
+    org.springframework.cloud.openfeign: info
+mybatis-plus:
+  type-aliases-package: com.assist.common.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      table-underline: true
+      id-type: auto
+
+# Feign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000 # 连接超时时间（毫秒）
+        readTimeout: 10000 # 读取超时时间（毫秒）
+        loggerLevel: basic # 日志级别
+  hystrix:
+    enabled: false # 禁用 Hystrix（如果不需要熔断）
+  circuitbreaker:
+    enabled: false # 禁用断路器（如果不需要）
+  httpclient:
+    enabled: true # 启用 HTTP 客户端
+  okhttp:
+    enabled: false # 禁用 OkHttp
+

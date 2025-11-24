@@ -3,7 +3,15 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/diagnosis-ai-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/doctor-confirm-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gateway-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/patient-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/prescription-ai-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/summary-ai-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/symptom-ai-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/test-suggestion-ai-service/src/main/java" charset="UTF-8" />
   </component>
 </project>

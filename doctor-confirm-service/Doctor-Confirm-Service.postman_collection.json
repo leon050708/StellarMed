@@ -1,0 +1,223 @@
+{
+	"info": {
+		"_postman_id": "doctor-confirm-service-collection",
+		"name": "Doctor Confirm Service API",
+		"description": "医生最终确认服务接口测试集合",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. 聚合查询助诊报告",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8301/api/doctor-confirm/ai-report?patientId=1&sessionId=1001",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8301",
+					"path": [
+						"api",
+						"doctor-confirm",
+						"ai-report"
+					],
+					"query": [
+						{
+							"key": "patientId",
+							"value": "1",
+							"description": "患者ID"
+						},
+						{
+							"key": "sessionId",
+							"value": "1001",
+							"description": "会话ID"
+						}
+					]
+				},
+				"description": "按照23456顺序调用各个AI服务，聚合所有AI助诊数据并返回。\n\n调用顺序：\n- 步骤2: symptom-ai-service (症状结构化)\n- 步骤3: diagnosis-ai-service (初步诊断 + 风险评估)\n- 步骤4: test-suggestion-ai-service (检查建议)\n- 步骤5: summary-ai-service (问诊总结)\n- 步骤6: prescription-ai-service (处方建议)"
+			},
+			"response": []
+		},
+		{
+			"name": "2. 医生最终确认诊断",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"patientId\": 1,\n    \"sessionId\": 1001,\n    \"doctorId\": 101,\n    \"finalDiagnosis\": \"急性上呼吸道感染\",\n    \"finalPrescription\": \"1. 阿莫西林胶囊 0.5g 每日3次，饭后服用，连续7天\\n2. 布洛芬缓释胶囊 0.3g 每日2次，饭后服用，连续3天\\n3. 多喝水，注意休息\",\n    \"comment\": \"患者症状典型，建议按处方服药，如3天后症状未缓解，请及时复诊。\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8301/api/doctor-confirm/final-diagnosis",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8301",
+					"path": [
+						"api",
+						"doctor-confirm",
+						"final-diagnosis"
+					]
+				},
+				"description": "医生查看AI助诊报告后，输入最终诊断、处方等信息并保存到数据库。"
+			},
+			"response": []
+		},
+		{
+			"name": "3. 获取AI生成的确认建议",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8301/api/doctor-confirm/ai/suggestion?patientId=1&sessionId=1001",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8301",
+					"path": [
+						"api",
+						"doctor-confirm",
+						"ai",
+						"suggestion"
+					],
+					"query": [
+						{
+							"key": "patientId",
+							"value": "1",
+							"description": "患者ID"
+						},
+						{
+							"key": "sessionId",
+							"value": "1001",
+							"description": "会话ID"
+						}
+					]
+				},
+				"description": "基于聚合的助诊报告，生成AI建议供医生参考。包括诊断合理性分析、风险点、用药注意事项等。"
+			},
+			"response": []
+		},
+		{
+			"name": "4. 获取诊断对比分析",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8301/api/doctor-confirm/ai/compare?sessionId=1001",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8301",
+					"path": [
+						"api",
+						"doctor-confirm",
+						"ai",
+						"compare"
+					],
+					"query": [
+						{
+							"key": "sessionId",
+							"value": "1001",
+							"description": "会话ID（必须先调用接口2保存医生确认结果）"
+						}
+					]
+				},
+				"description": "对比AI诊断和医生最终诊断的差异，帮助医生了解AI诊断的准确性。\n\n注意：需要先调用接口2保存医生确认结果，否则会返回错误。"
+			},
+			"response": []
+		},
+		{
+			"name": "5. 获取诊断合理性评估",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8301/api/doctor-confirm/ai/evaluate?patientId=1&sessionId=1001",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8301",
+					"path": [
+						"api",
+						"doctor-confirm",
+						"ai",
+						"evaluate"
+					],
+					"query": [
+						{
+							"key": "patientId",
+							"value": "1",
+							"description": "患者ID"
+						},
+						{
+							"key": "sessionId",
+							"value": "1001",
+							"description": "会话ID"
+						}
+					]
+				},
+				"description": "评估AI诊断的合理性，提供风险提示，帮助医生判断是否需要进一步检查或调整诊断。"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8301",
+			"type": "string"
+		},
+		{
+			"key": "patientId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "sessionId",
+			"value": "1001",
+			"type": "string"
+		},
+		{
+			"key": "doctorId",
+			"value": "101",
+			"type": "string"
+		}
+	]
+}
+
