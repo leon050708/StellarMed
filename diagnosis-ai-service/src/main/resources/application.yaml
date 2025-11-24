@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: diagnosis-ai-service
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://82.157.188.65:2000/pool2?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: mysql_awJcEH
+    # Spring AI + 通义千问（阿里千问）
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY:sk-40e3ec4dd521470eaf8ecaa96d0c9c86}
+      chat:
+        options:
+          model: qwen-plus
+          max-tokens: 2000
+      # 其他模型配置可以后面具体写
+
+  # === Nacos 配置先整体注释，后面你需要时再打开 ===
+  # cloud:
+  #   nacos:
+  #     discovery:
+  #       server-addr: localhost:8848
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+
+
+server:
+  port: 8202
