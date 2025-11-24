@@ -24,10 +24,6 @@ spring:
     username: root
     password: mysql_awJcEH
 
-  # 关闭 Spring Boot 自动执行 schema.sql / data.sql 初始化，避免与 MyBatis-Plus Mapper 冲突
-  sql:
-    init:
-      enabled: false
 
   # SpringAI 通义千问（DashScope）配置
   ai:
