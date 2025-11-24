@@ -3,8 +3,7 @@ package com.assist.diagnosis;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-// import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-// import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication(
         scanBasePackages = {
@@ -12,8 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         }
 )
 @MapperScan("com.assist.diagnosis.mapper")
-// @EnableDiscoveryClient  // TODO: 开启 Nacos 时再放开
-// @EnableFeignClients(basePackages = "com.assist.diagnosis.client") // 目前不需要 Feign，可先不建 client 包
+@EnableDiscoveryClient  // 启用 Nacos 服务发现
 public class DiagnosisAiServiceApplication {
 
     public static void main(String[] args) {

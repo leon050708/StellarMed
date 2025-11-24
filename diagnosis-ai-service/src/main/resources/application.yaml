@@ -1,32 +1,58 @@
+server:
+  port: 8202
+
 spring:
   application:
     name: diagnosis-ai-service
+
+  config:
+    import: "optional:nacos:application-${spring.profiles.active:default}.yml"
+
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: localhost:8848
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        enabled: false
+        server-addr: localhost:8848
+        namespace: public
+        file-extension: yml
+
+  # SpringAI - 通义千问配置（使用OpenAI兼容模式）
+  ai:
+    openai:
+      api-key: sk-45be1e34b677429db3a614c91fc07f2b
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/
+      chat:
+        options:
+          model: qwen-flash
+          temperature: 0.8
+          max-tokens: 2000
+
+  # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://82.157.188.65:2000/pool2?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: mysql_awJcEH
-    # Spring AI + 通义千问（阿里千问）
-  ai:
-    dashscope:
-      api-key: ${DASHSCOPE_API_KEY:sk-40e3ec4dd521470eaf8ecaa96d0c9c86}
-      chat:
-        options:
-          model: qwen-plus
-          max-tokens: 2000
-      # 其他模型配置可以后面具体写
+    type: com.alibaba.druid.pool.DruidDataSource
 
-  # === Nacos 配置先整体注释，后面你需要时再打开 ===
-  # cloud:
-  #   nacos:
-  #     discovery:
-  #       server-addr: localhost:8848
-
+# MyBatis-Plus配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.assist.common.entity
+  global-config:
+    db-config:
+      id-type: auto  # 全局使用数据库自增 ID
 
-
-
-server:
-  port: 8202
+logging:
+  level:
+    com.assist.diagnosis: debug
+    org.springframework.ai: debug

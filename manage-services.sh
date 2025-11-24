@@ -15,6 +15,7 @@ LOG_DIR="$PROJECT_ROOT/logs"
 declare -a SERVICES=(
     "patient-service:8101"
     "symptom-ai-service:8201"
+    "diagnosis-ai-service:8202"
     "test-suggestion-ai-service:8083"
     "summary-ai-service:8204"
     "prescription-ai-service:8085"

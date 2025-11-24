@@ -40,6 +40,7 @@ cd "$PROJECT_ROOT" || exit
 declare -a SERVICES=(
     "patient-service:8101:patient-service"
     "symptom-ai-service:8201:symptom-ai-service"
+    "diagnosis-ai-service:8202:diagnosis-ai-service"
     "test-suggestion-ai-service:8083:test-suggestion-ai-service"
     "summary-ai-service:8204:summary-ai-service"
     "prescription-ai-service:8085:prescription-ai-service"
