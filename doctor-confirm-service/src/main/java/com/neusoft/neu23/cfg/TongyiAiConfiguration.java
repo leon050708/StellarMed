@@ -1,10 +1,11 @@
 package com.neusoft.neu23.cfg;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * 用于生成医生确认建议、诊断对比分析、合理性评估等场景
  */
 @Configuration
+@Slf4j
 public class TongyiAiConfiguration {
 
     /**
@@ -38,12 +40,16 @@ public class TongyiAiConfiguration {
 
     /**
      * 创建 ChatClient Bean
-     * 只有当 OpenAiChatModel Bean 存在时才创建
+     * 当 OpenAiChatModel 可用时自动装配，否则返回 null
      */
     @Bean
     @Qualifier("chatClientQwen")
-    @ConditionalOnBean(OpenAiChatModel.class)
-    public ChatClient chatClientQwen(OpenAiChatModel model) {
+    public ChatClient chatClientQwen(ObjectProvider<OpenAiChatModel> modelProvider) {
+        OpenAiChatModel model = modelProvider.getIfAvailable();
+        if (model == null) {
+            log.warn("OpenAiChatModel 未创建，AI文本分析能力不可用。");
+            return null;
+        }
         return ChatClient.builder(model)
                 .defaultSystem(DEFAULT_SYSTEM_PROMPT)
                 .defaultAdvisors(new SimpleLoggerAdvisor())

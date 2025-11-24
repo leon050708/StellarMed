@@ -12,7 +12,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 @SpringBootApplication(scanBasePackages = "com.assist, com.neusoft.neu23") // 扫描公共模块和当前服务包
 @EnableDiscoveryClient // 启用Nacos服务发现
 @MapperScan("com.neusoft.neu23.mapper") // 扫描MyBatis Mapper接口
-public class App {
+public class SummaryAiServiceApplication {
     public static void main(String[] args) {
         // 禁用 Nacos Config 检查
         System.setProperty("spring.cloud.nacos.config.import-check.enabled", "false");
@@ -21,7 +21,7 @@ public class App {
         System.setProperty("spring.cloud.nacos.discovery.watch.enabled", "false");
         System.setProperty("spring.cloud.nacos.discovery.fail-fast", "false");
         
-        SpringApplication app = new SpringApplication(App.class);
+        SpringApplication app = new SpringApplication(SummaryAiServiceApplication.class);
         app.setLogStartupInfo(true); // 启用启动日志
         app.run(args);
     }

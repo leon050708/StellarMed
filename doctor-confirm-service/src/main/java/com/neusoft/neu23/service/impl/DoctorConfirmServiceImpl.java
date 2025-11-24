@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * 医生最终确认服务实现
@@ -55,29 +56,31 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             SymptomExtractRequest symptomRequest = new SymptomExtractRequest();
             symptomRequest.setPatientId(patientId);
             symptomRequest.setSessionId(sessionId);
-            ApiResponse<SymptomExtractResponse> symptomResponse = symptomAiClient.extract(symptomRequest);
-            if (symptomResponse == null || symptomResponse.getCode() != 0 || symptomResponse.getData() == null) {
-                log.warn("症状结构化服务调用失败: {}", symptomResponse != null ? symptomResponse.getMsg() : "响应为空");
-                report.setSymptoms(List.of());
-            } else {
+            ApiResponse<SymptomExtractResponse> symptomResponse = safeFeignCall("symptom-ai-service",
+                    () -> symptomAiClient.extract(symptomRequest));
+            if (isSuccess(symptomResponse)) {
                 List<AiSymptomStructured> structuredSymptoms = symptomResponse.getData().getStructuredSymptoms();
                 report.setSymptoms(structuredSymptoms != null ? structuredSymptoms : List.of());
                 log.info("症状结构化完成，共 {} 条", report.getSymptoms().size());
+            } else {
+                log.warn("症状结构化服务调用失败: {}", errorMsg(symptomResponse));
+                report.setSymptoms(List.of());
             }
 
-            // 步骤3: 调用 diagnosis-ai-service - 初步诊断和风险评估
+            // 步骤3: 调用 diagnosis-ai-service - 初步诊断
             log.info("步骤3: 调用初步诊断服务");
             DiagnosisEvaluateRequest diagnosisRequest = new DiagnosisEvaluateRequest();
             diagnosisRequest.setPatientId(patientId);
             diagnosisRequest.setSessionId(sessionId);
-            ApiResponse<DiagnosisEvaluateResponse> diagnosisResponse = diagnosisAiClient.evaluateDiagnosis(diagnosisRequest);
-            if (diagnosisResponse == null || diagnosisResponse.getCode() != 0 || diagnosisResponse.getData() == null) {
-                log.warn("初步诊断服务调用失败: {}", diagnosisResponse != null ? diagnosisResponse.getMsg() : "响应为空");
-                report.setDiagnoses(List.of());
-            } else {
+            ApiResponse<DiagnosisEvaluateResponse> diagnosisResponse = safeFeignCall("diagnosis-ai-service#evaluate",
+                    () -> diagnosisAiClient.evaluateDiagnosis(diagnosisRequest));
+            if (isSuccess(diagnosisResponse)) {
                 List<AiPreDiagnosis> diagnoses = diagnosisResponse.getData().getDiagnoses();
                 report.setDiagnoses(diagnoses != null ? diagnoses : List.of());
                 log.info("初步诊断完成，共 {} 条", report.getDiagnoses().size());
+            } else {
+                log.warn("初步诊断服务调用失败: {}", errorMsg(diagnosisResponse));
+                report.setDiagnoses(List.of());
             }
 
             // 步骤3: 调用 diagnosis-ai-service - 风险评估
@@ -85,13 +88,14 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             RiskEvaluateRequest riskRequest = new RiskEvaluateRequest();
             riskRequest.setPatientId(patientId);
             riskRequest.setSessionId(sessionId);
-            ApiResponse<RiskEvaluateResponse> riskResponse = diagnosisAiClient.evaluateRisk(riskRequest);
-            if (riskResponse == null || riskResponse.getCode() != 0 || riskResponse.getData() == null) {
-                log.warn("风险评估服务调用失败: {}", riskResponse != null ? riskResponse.getMsg() : "响应为空");
-                report.setRiskAssessment(null);
-            } else {
+            ApiResponse<RiskEvaluateResponse> riskResponse = safeFeignCall("diagnosis-ai-service#risk",
+                    () -> diagnosisAiClient.evaluateRisk(riskRequest));
+            if (isSuccess(riskResponse)) {
                 report.setRiskAssessment(riskResponse.getData().getRiskAssessment());
                 log.info("风险评估完成: {}", report.getRiskAssessment() != null ? "有数据" : "无数据");
+            } else {
+                log.warn("风险评估服务调用失败: {}", errorMsg(riskResponse));
+                report.setRiskAssessment(null);
             }
 
             // 步骤4: 调用 test-suggestion-ai-service - 检查建议
@@ -99,25 +103,27 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             TestSuggestionRequest testRequest = new TestSuggestionRequest();
             testRequest.setPatientId(patientId);
             testRequest.setSessionId(sessionId);
-            ApiResponse<TestSuggestionResponse> testResponse = testSuggestionAiClient.generate(testRequest);
-            if (testResponse == null || testResponse.getCode() != 0 || testResponse.getData() == null) {
-                log.warn("检查建议服务调用失败: {}", testResponse != null ? testResponse.getMsg() : "响应为空");
-                report.setTestSuggestions(List.of());
-            } else {
+            ApiResponse<TestSuggestionResponse> testResponse = safeFeignCall("test-suggestion-ai-service",
+                    () -> testSuggestionAiClient.generate(testRequest));
+            if (isSuccess(testResponse)) {
                 List<AiTestSuggestion> testSuggestions = testResponse.getData().getTestSuggestions();
                 report.setTestSuggestions(testSuggestions != null ? testSuggestions : List.of());
                 log.info("检查建议完成，共 {} 条", report.getTestSuggestions().size());
+            } else {
+                log.warn("检查建议服务调用失败: {}", errorMsg(testResponse));
+                report.setTestSuggestions(List.of());
             }
 
             // 步骤5: 调用 summary-ai-service - 问诊总结
             log.info("步骤5: 调用问诊总结服务");
-            ApiResponse<SummaryWithDataResponse> summaryResponse = summaryAiClient.generateWithData(patientId, sessionId);
-            if (summaryResponse == null || summaryResponse.getCode() != 0 || summaryResponse.getData() == null) {
-                log.warn("问诊总结服务调用失败: {}", summaryResponse != null ? summaryResponse.getMsg() : "响应为空");
-                report.setSessionSummary(null);
-            } else {
+            ApiResponse<SummaryWithDataResponse> summaryResponse = safeFeignCall("summary-ai-service",
+                    () -> summaryAiClient.generateWithData(patientId, sessionId));
+            if (isSuccess(summaryResponse)) {
                 report.setSessionSummary(summaryResponse.getData().getSessionSummary());
                 log.info("问诊总结完成: {}", report.getSessionSummary() != null ? "有数据" : "无数据");
+            } else {
+                log.warn("问诊总结服务调用失败: {}", errorMsg(summaryResponse));
+                report.setSessionSummary(null);
             }
 
             // 步骤6: 调用 prescription-ai-service - 处方建议
@@ -125,14 +131,15 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             PrescriptionGenerateRequest prescriptionRequest = new PrescriptionGenerateRequest();
             prescriptionRequest.setPatientId(patientId);
             prescriptionRequest.setSessionId(sessionId);
-            ApiResponse<PrescriptionGenerateResponse> prescriptionResponse = prescriptionAiClient.generate(prescriptionRequest);
-            if (prescriptionResponse == null || prescriptionResponse.getCode() != 0 || prescriptionResponse.getData() == null) {
-                log.warn("处方建议服务调用失败: {}", prescriptionResponse != null ? prescriptionResponse.getMsg() : "响应为空");
-                report.setPrescriptions(List.of());
-            } else {
+            ApiResponse<PrescriptionGenerateResponse> prescriptionResponse = safeFeignCall("prescription-ai-service",
+                    () -> prescriptionAiClient.generate(prescriptionRequest));
+            if (isSuccess(prescriptionResponse)) {
                 List<AiPrescription> prescriptions = prescriptionResponse.getData().getPrescriptions();
                 report.setPrescriptions(prescriptions != null ? prescriptions : List.of());
                 log.info("处方建议完成，共 {} 条", report.getPrescriptions().size());
+            } else {
+                log.warn("处方建议服务调用失败: {}", errorMsg(prescriptionResponse));
+                report.setPrescriptions(List.of());
             }
 
             log.info("AI助诊报告聚合完成，sessionId={}", sessionId);
@@ -175,6 +182,26 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             log.info("医生最终确认结果已更新 sessionId={}", request.getSessionId());
         }
         return ApiResponse.successMsg("医生最终确认保存成功");
+    }
+
+    private <T> ApiResponse<T> safeFeignCall(String serviceName, Supplier<ApiResponse<T>> supplier) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            log.warn("{} 调用异常: {}", serviceName, e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isSuccess(ApiResponse<?> response) {
+        return response != null && response.getCode() == 0 && response.getData() != null;
+    }
+
+    private String errorMsg(ApiResponse<?> response) {
+        if (response == null) {
+            return "请求失败（无响应，可能是服务未启动或网关未转发）";
+        }
+        return response.getMsg() != null ? response.getMsg() : "服务返回空数据";
     }
 }
 

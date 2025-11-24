@@ -14,8 +14,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.neusoft.neu23.tc.client")
 @MapperScan("com.neusoft.neu23.mapper")
-public class App {
+public class DoctorConfirmServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(App.class, args);
+        SpringApplication.run(DoctorConfirmServiceApplication.class, args);
     }
 }
