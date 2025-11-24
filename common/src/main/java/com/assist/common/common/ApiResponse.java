@@ -16,15 +16,19 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<T>(0, "success", data);
+        return new ApiResponse<>(0, "success", data);
+    }
+
+    public static ApiResponse<Void> successMsg(String msg) {
+        return new ApiResponse<>(0, msg, null);
     }
 
     public static <T> ApiResponse<T> error(String msg) {
-        return new ApiResponse<T>(-1, msg, null);
+        return new ApiResponse<>(-1, msg, null);
     }
 
     public static <T> ApiResponse<T> error(int code, String msg) {
-        return new ApiResponse<T>(code, msg, null);
+        return new ApiResponse<>(code, msg, null);
     }
 }
 

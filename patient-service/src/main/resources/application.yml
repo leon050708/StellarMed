@@ -1,0 +1,74 @@
+server:
+  port: 8101
+
+spring:
+  application:
+    name: patient-service
+  
+  config:
+    import: "optional:nacos:application-${spring.profiles.active:default}.yml"
+  
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        server-addr: localhost:8848
+        namespace: public
+      config:
+        enabled: false
+        server-addr: localhost:8848
+        namespace: public
+        file-extension: yml
+
+  # SpringAI - 通义千问配置（使用OpenAI兼容模式）
+  ai:
+    openai:
+      api-key: sk-45be1e34b677429db3a614c91fc07f2b
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/
+      chat:
+        options:
+          model: qwen-flash
+          temperature: 0.8
+
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://82.157.188.65:2000/pool2?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: mysql_awJcEH
+    type: com.alibaba.druid.pool.DruidDataSource
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.assist.common.entity
+
+# Feign配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+      # 本地测试：直接指定服务 URL（绕过服务发现）
+      symptom-ai-service:
+        url: http://localhost:8201
+      test-suggestion-ai-service:
+        url: http://localhost:8202
+      summary-ai-service:
+        url: http://localhost:8203
+      prescription-ai-service:
+        url: http://localhost:8204
+      diagnosis-ai-service:
+        url: http://localhost:8205
+
+logging:
+  level:
+    com.assist.patient: debug
+    org.springframework.cloud.openfeign: debug
+    org.springframework.ai: debug
+
