@@ -33,10 +33,10 @@ spring:
   ai:
     dashscope:
       # DashScope API Key（生产环境建议通过环境变量配置）
-      api-key: sk-a37dc4727cd7419783e5daf1c7e65b6b
+      api-key: sk-45be1e34b677429db3a614c91fc07f2b
       chat:
         options:
-          model: qwen-plus
+          model: qwen-flash
           temperature: 0.7
           top-p: 0.8
 
