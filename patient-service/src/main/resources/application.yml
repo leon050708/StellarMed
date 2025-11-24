@@ -12,9 +12,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        enabled: false
+        enabled: true  # 启用服务发现
         server-addr: localhost:8848
         namespace: public
+        group: DEFAULT_GROUP
       config:
         enabled: false
         server-addr: localhost:8848
@@ -54,17 +55,8 @@ feign:
       default:
         connectTimeout: 5000
         readTimeout: 10000
-      # 本地测试：直接指定服务 URL（绕过服务发现）
-      symptom-ai-service:
-        url: http://localhost:8201
-      test-suggestion-ai-service:
-        url: http://localhost:8202
-      summary-ai-service:
-        url: http://localhost:8203
-      prescription-ai-service:
-        url: http://localhost:8204
-      diagnosis-ai-service:
-        url: http://localhost:8205
+      # 使用 Nacos 服务发现，通过服务名调用
+      # 不再需要直接指定 URL
 
 logging:
   level:

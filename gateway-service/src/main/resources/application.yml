@@ -1,5 +1,5 @@
 server:
-  port: 8080  # 网关对外统一端口
+  port: 8888  # 网关对外统一端口（8080 被 Nacos 占用，改为 8888）
 
 spring:
   application:
@@ -31,10 +31,27 @@ spring:
       # --- 路由规则配置 ---
       routes:
         # 1. 患者服务 (Patient Service) - 核心入口
-        - id: patient-service
+        # 将多个路径拆分为多个路由规则，避免 Path 谓词语法问题
+        - id: patient-service-patients
           uri: lb://patient-service
           predicates:
-            - Path=/api/patients/**, /api/sessions/**, /api/chat/**, /api/symptoms/**, /api/assist/**
+            - Path=/api/patients/**
+        - id: patient-service-sessions
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/sessions/**
+        - id: patient-service-chat
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/chat/**
+        - id: patient-service-symptoms
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/symptoms/**
+        - id: patient-service-assist
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/assist/**
 
         # 2. 医生确认服务 (Doctor Confirm Service) - 医生端入口
         - id: doctor-confirm-service
@@ -57,10 +74,14 @@ spring:
             - Path=/api/ai/test-suggestions/**
 
         # 5. 诊断 AI
-        - id: diagnosis-ai-service
+        - id: diagnosis-ai-service-diagnosis
           uri: lb://diagnosis-ai-service
           predicates:
-            - Path=/api/ai/diagnosis/**, /api/ai/risk/**
+            - Path=/api/ai/diagnosis/**
+        - id: diagnosis-ai-service-risk
+          uri: lb://diagnosis-ai-service
+          predicates:
+            - Path=/api/ai/risk/**
 
         # 6. 总结 AI
         - id: summary-ai-service

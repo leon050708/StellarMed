@@ -8,8 +8,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        enabled: false
+        enabled: true  # 启用服务发现
         server-addr: localhost:8848
+        namespace: public
+        group: DEFAULT_GROUP
       config:
         enabled: false
         server-addr: localhost:8848
