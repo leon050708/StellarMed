@@ -25,6 +25,7 @@
     <module>summary-ai-service</module>
     <module>prescription-ai-service</module>
     <module>doctor-confirm-service</module>
+    <module>gateway-service</module>
   </modules>
 
   <properties>

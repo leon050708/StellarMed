@@ -47,12 +47,21 @@
         <!-- MyBatis-Plus -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <exclusions>
+                <!-- 使用兼容 Spring 6 的 mybatis-spring 3.x，排除旧版本 -->
+                <exclusion>
+                    <groupId>org.mybatis</groupId>
+                    <artifactId>mybatis-spring</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <!-- MyBatis-Plus JSQLParser (分页插件需要) -->
+
+        <!-- MyBatis-Spring：升级到 3.0.5，支持 Spring 6 / Boot 3.x -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>3.0.5</version>
         </dependency>
 
         <!-- MySQL驱动 -->
@@ -66,6 +75,12 @@
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
+        </dependency>
+        
+        <!-- SpringAI Core -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-core</artifactId>
         </dependency>
 
         <!-- Lombok -->

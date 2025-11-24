@@ -1,0 +1,75 @@
+server:
+  port: 8080  # 网关对外统一端口
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848 # Nacos 地址
+
+    gateway:
+      discovery:
+        locator:
+          enabled: true # 开启从 Nacos 自动发现服务，这样 lb://service-name 才能生效
+          lower-case-service-id: true
+
+      # --- 全局跨域配置 (解决前端 CORS 问题) ---
+      # 修复点：Spring Boot 2.4+ 必须使用 allowedOriginPatterns 代替 allowedOrigins
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"   # <--- 这里是关键修改！
+            allowedMethods: "*"          # 允许所有 HTTP 方法 (GET, POST, PUT, DELETE等)
+            allowedHeaders: "*"          # 允许所有 Header
+            allowCredentials: true       # 允许携带 Cookie
+            maxAge: 3600
+
+      # --- 路由规则配置 ---
+      routes:
+        # 1. 患者服务 (Patient Service) - 核心入口
+        - id: patient-service
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/patients/**, /api/sessions/**, /api/chat/**, /api/symptoms/**, /api/assist/**
+
+        # 2. 医生确认服务 (Doctor Confirm Service) - 医生端入口
+        - id: doctor-confirm-service
+          uri: lb://doctor-confirm-service
+          predicates:
+            - Path=/api/doctor-confirm/**
+
+        # --- 以下为 AI 服务路由 ---
+
+        # 3. 症状 AI
+        - id: symptom-ai-service
+          uri: lb://symptom-ai-service
+          predicates:
+            - Path=/api/ai/symptoms/**
+
+        # 4. 检查建议 AI
+        - id: test-suggestion-ai-service
+          uri: lb://test-suggestion-ai-service
+          predicates:
+            - Path=/api/ai/test-suggestions/**
+
+        # 5. 诊断 AI
+        - id: diagnosis-ai-service
+          uri: lb://diagnosis-ai-service
+          predicates:
+            - Path=/api/ai/diagnosis/**, /api/ai/risk/**
+
+        # 6. 总结 AI
+        - id: summary-ai-service
+          uri: lb://summary-ai-service
+          predicates:
+            - Path=/api/ai/session-summary/**
+
+        # 7. 处方 AI
+        - id: prescription-ai-service
+          uri: lb://prescription-ai-service
+          predicates:
+            - Path=/api/ai/prescriptions/**

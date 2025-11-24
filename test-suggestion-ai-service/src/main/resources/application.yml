@@ -5,36 +5,26 @@ spring:
   application:
     name: test-suggestion-ai-service
   
-  # Nacos 配置导入
-  config:
-    import: "optional:nacos:application-${spring.profiles.active:default}.yml"
-  
-  # 数据库配置
+  # 数据库配置 (保留你原来的)
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://82.157.188.65:2000/pool2?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: mysql_awJcEH
-  
-  # Nacos服务发现和配置中心
+
+  # Nacos 配置 (全部移到这里！)
   cloud:
     nacos:
       discovery:
-        enabled: false  # 禁用服务发现（本地测试）
+        enabled: true   # ✅ 必须为 true
         server-addr: localhost:8848
-        namespace: public
+        namespace: public # 显式指定 public
         group: DEFAULT_GROUP
-        fail-fast: false  # 即使 Nacos 不可用也不快速失败
+        register-enabled: true
       config:
-        enabled: false  # 禁用配置中心（本地测试）
-        server-addr: localhost:8848
-        file-extension: yaml
-        namespace: public
-        group: DEFAULT_GROUP
-        import-check:
-          enabled: false  # 禁用配置导入检查
-  
-  # SpringAI - 通义千问配置（使用OpenAI兼容模式）
+        enabled: false  # 暂时不需要配置中心
+
+  # AI 配置
   ai:
     openai:
       api-key: sk-45be1e34b677429db3a614c91fc07f2b
@@ -44,7 +34,6 @@ spring:
           model: qwen-flash
           temperature: 0.8
 
-# MyBatis-Plus配置
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.assist.common.entity
@@ -55,14 +44,7 @@ mybatis-plus:
     db-config:
       id-type: auto
 
-# 日志配置
 logging:
   level:
     com.neusoft.neu23: debug
-    com.assist.common: debug
-    com.alibaba.cloud.nacos: debug  # Nacos 相关日志
-    com.alibaba.nacos: debug  # Nacos 客户端日志
-    org.springframework.cloud: debug  # Spring Cloud 日志
-  pattern:
-    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
-
+    com.alibaba.nacos: warn # 减少 Nacos 刷屏日志
