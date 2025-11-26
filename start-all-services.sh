@@ -37,7 +37,9 @@ PROJECT_ROOT="/Users/leon/Desktop/code/javaProject/StellarMed"
 cd "$PROJECT_ROOT" || exit
 
 # 定义服务列表（服务名:端口:目录）
+# 注意：网关服务应该最先启动，因为它是统一入口
 declare -a SERVICES=(
+    "gateway-service:8888:gateway-service"
     "patient-service:8101:patient-service"
     "symptom-ai-service:8201:symptom-ai-service"
     "diagnosis-ai-service:8202:diagnosis-ai-service"
@@ -102,8 +104,16 @@ echo ""
 echo "服务列表："
 for service_info in "${SERVICES[@]}"; do
     IFS=':' read -r service_name port service_dir <<< "$service_info"
-    echo "  - $service_name: http://localhost:$port"
+    if [ "$service_name" = "gateway-service" ]; then
+        echo "  - $service_name: http://localhost:$port (统一入口)"
+    else
+        echo "  - $service_name: http://localhost:$port"
+    fi
 done
+echo ""
+echo "⚠️  重要提示："
+echo "   - 所有API请求应通过网关访问: http://localhost:8888"
+echo "   - 网关会自动路由到对应的后端服务"
 echo ""
 echo "查看日志: tail -f $LOG_DIR/*.log"
 echo "停止所有服务: pkill -f 'spring-boot:run'"
