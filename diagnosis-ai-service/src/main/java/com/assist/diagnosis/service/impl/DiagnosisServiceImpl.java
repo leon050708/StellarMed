@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import com.assist.common.common.ErrorCode;
-import com.assist.common.common.ApiResponse;
 import com.assist.common.common.BusinessException;
 import com.assist.common.dto.request.DiagnosisEvaluateRequest;
 import com.assist.common.dto.response.DiagnosisEvaluateResponse;
@@ -28,9 +27,6 @@ public class DiagnosisServiceImpl implements DiagnosisService {
     private final AiPreDiagnosisMapper aiPreDiagnosisMapper;
     private final AiSymptomStructuredMapper aiSymptomStructuredMapper;
     private final ChatClient chatClient;
-
-    // TODO: 注入 Spring AI 的 ChatClient / ChatModel（在 SpringAiConfig 里配置好后）
-    // private final ChatClient chatClient;
 
     @Override
     public DiagnosisEvaluateResponse evaluateDiagnosis(DiagnosisEvaluateRequest request) {

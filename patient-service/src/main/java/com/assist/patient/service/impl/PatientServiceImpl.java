@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 患者服务实现
@@ -35,6 +36,11 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public Patient getByCaseNumber(String caseNumber) {
         return patientMapper.selectByCaseNumber(caseNumber);
+    }
+
+    @Override
+    public List<Patient> getAllPatients() {
+        return patientMapper.selectList(null);
     }
 }
 

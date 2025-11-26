@@ -36,6 +36,15 @@ public class PatientController {
     }
 
     /**
+     * 获取所有患者列表
+     */
+    @GetMapping("/patients")
+    public ApiResponse<java.util.List<Patient>> getAllPatients() {
+        java.util.List<Patient> patients = patientService.getAllPatients();
+        return ApiResponse.success(patients);
+    }
+
+    /**
      * 根据病例号查询患者
      */
     @GetMapping("/patients/by-case-number")
