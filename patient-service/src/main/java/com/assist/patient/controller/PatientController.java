@@ -1,14 +1,11 @@
 package com.assist.patient.controller;
 
 import com.assist.common.common.ApiResponse;
-import com.assist.common.dto.request.AssistFlowTriggerRequest;
-import com.assist.common.dto.response.AiAggregatedReport;
 import com.assist.common.entity.Patient;
 import com.assist.patient.service.PatientService;
 import com.assist.patient.service.SessionService;
 import com.assist.patient.service.ChatService;
 import com.assist.patient.service.SymptomService;
-import com.assist.patient.service.AssistFlowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +21,6 @@ public class PatientController {
     private final SessionService sessionService;
     private final ChatService chatService;
     private final SymptomService symptomService;
-    private final AssistFlowService assistFlowService;
 
     /**
      * 创建或更新患者
@@ -117,13 +113,5 @@ public class PatientController {
         return ApiResponse.success(symptomId);
     }
 
-    /**
-     * 一键触发整体AI助诊流程（核心接口）
-     */
-    @PostMapping("/assist/full")
-    public ApiResponse<AiAggregatedReport> triggerFullAssistFlow(@RequestBody AssistFlowTriggerRequest request) {
-        AiAggregatedReport report = assistFlowService.triggerFullFlow(request);
-        return ApiResponse.success(report);
-    }
 }
 
