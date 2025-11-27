@@ -6,12 +6,15 @@ import org.springframework.ai.chat.client.ChatClient;
 import com.assist.common.common.ErrorCode;
 import com.assist.common.common.BusinessException;
 import com.assist.common.dto.request.DiagnosisEvaluateRequest;
+import com.assist.common.dto.request.RiskEvaluateRequest;
 import com.assist.common.dto.response.DiagnosisEvaluateResponse;
+import com.assist.common.dto.response.DiagnosisAndRiskResponse;
 import com.assist.common.entity.AiPreDiagnosis;
 import com.assist.common.entity.AiSymptomStructured;
 import com.assist.diagnosis.mapper.AiPreDiagnosisMapper;
 import com.assist.diagnosis.mapper.AiSymptomStructuredMapper;
 import com.assist.diagnosis.service.DiagnosisService;
+import com.assist.diagnosis.service.RiskAssessmentService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ public class DiagnosisServiceImpl implements DiagnosisService {
     private final AiPreDiagnosisMapper aiPreDiagnosisMapper;
     private final AiSymptomStructuredMapper aiSymptomStructuredMapper;
     private final ChatClient chatClient;
+    private final RiskAssessmentService riskAssessmentService;
 
     @Override
     public DiagnosisEvaluateResponse evaluateDiagnosis(DiagnosisEvaluateRequest request) {
@@ -72,6 +76,27 @@ public class DiagnosisServiceImpl implements DiagnosisService {
         resp.setDiagnoses(aiResultList);
         resp.setMessage("AI 初步诊断完成");
         return resp;
+    }
+
+    @Override
+    public DiagnosisAndRiskResponse evaluateDiagnosisAndRisk(DiagnosisEvaluateRequest request) {
+        // 1. 先执行初步诊断
+        DiagnosisEvaluateResponse diagnosisResponse = evaluateDiagnosis(request);
+        
+        // 2. 再执行风险评估（风险评估会使用已生成的诊断结果）
+        RiskEvaluateRequest riskRequest = new RiskEvaluateRequest();
+        riskRequest.setPatientId(request.getPatientId());
+        riskRequest.setSessionId(request.getSessionId());
+        com.assist.common.dto.response.RiskEvaluateResponse riskResponse = 
+                riskAssessmentService.evaluateRisk(riskRequest);
+        
+        // 3. 合并结果
+        DiagnosisAndRiskResponse combinedResponse = new DiagnosisAndRiskResponse();
+        combinedResponse.setDiagnoses(diagnosisResponse.getDiagnoses());
+        combinedResponse.setRiskAssessment(riskResponse.getRiskAssessment());
+        combinedResponse.setMessage("AI 初步诊断和风险评估完成");
+        
+        return combinedResponse;
     }
 
     // private String buildDiagnosisPrompt(List<AiSymptomStructured> symptoms) { ... }

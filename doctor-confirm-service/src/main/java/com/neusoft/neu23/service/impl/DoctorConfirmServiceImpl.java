@@ -5,6 +5,7 @@ import com.assist.common.common.BusinessException;
 import com.assist.common.common.ErrorCode;
 import com.assist.common.dto.request.*;
 import com.assist.common.dto.response.*;
+import com.assist.common.dto.response.DiagnosisAndRiskResponse;
 import com.assist.common.entity.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -67,34 +68,26 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
                 report.setSymptoms(List.of());
             }
 
-            // 步骤3: 调用 diagnosis-ai-service - 初步诊断
-            log.info("步骤3: 调用初步诊断服务");
+            // 步骤3: 调用 diagnosis-ai-service - 诊断和风险评估（合并接口）⭐
+            log.info("步骤3: 调用诊断和风险评估服务（合并接口）");
             DiagnosisEvaluateRequest diagnosisRequest = new DiagnosisEvaluateRequest();
             diagnosisRequest.setPatientId(patientId);
             diagnosisRequest.setSessionId(sessionId);
-            ApiResponse<DiagnosisEvaluateResponse> diagnosisResponse = safeFeignCall("diagnosis-ai-service#evaluate",
-                    () -> diagnosisAiClient.evaluateDiagnosis(diagnosisRequest));
-            if (isSuccess(diagnosisResponse)) {
-                List<AiPreDiagnosis> diagnoses = diagnosisResponse.getData().getDiagnoses();
+            ApiResponse<DiagnosisAndRiskResponse> diagnosisAndRiskResponse = safeFeignCall("diagnosis-ai-service#evaluateDiagnosisAndRisk",
+                    () -> diagnosisAiClient.evaluateDiagnosisAndRisk(diagnosisRequest));
+            if (isSuccess(diagnosisAndRiskResponse)) {
+                DiagnosisAndRiskResponse data = diagnosisAndRiskResponse.getData();
+                // 设置诊断列表
+                List<AiPreDiagnosis> diagnoses = data.getDiagnoses();
                 report.setDiagnoses(diagnoses != null ? diagnoses : List.of());
                 log.info("初步诊断完成，共 {} 条", report.getDiagnoses().size());
+                // 设置风险评估
+                report.setRiskAssessment(data.getRiskAssessment());
+                log.info("风险评估完成: {}", report.getRiskAssessment() != null ? 
+                        "风险等级=" + report.getRiskAssessment().getRiskLevel() : "无数据");
             } else {
-                log.warn("初步诊断服务调用失败: {}", errorMsg(diagnosisResponse));
+                log.warn("诊断和风险评估服务调用失败: {}", errorMsg(diagnosisAndRiskResponse));
                 report.setDiagnoses(List.of());
-            }
-
-            // 步骤3: 调用 diagnosis-ai-service - 风险评估
-            log.info("步骤3: 调用风险评估服务");
-            RiskEvaluateRequest riskRequest = new RiskEvaluateRequest();
-            riskRequest.setPatientId(patientId);
-            riskRequest.setSessionId(sessionId);
-            ApiResponse<RiskEvaluateResponse> riskResponse = safeFeignCall("diagnosis-ai-service#risk",
-                    () -> diagnosisAiClient.evaluateRisk(riskRequest));
-            if (isSuccess(riskResponse)) {
-                report.setRiskAssessment(riskResponse.getData().getRiskAssessment());
-                log.info("风险评估完成: {}", report.getRiskAssessment() != null ? "有数据" : "无数据");
-            } else {
-                log.warn("风险评估服务调用失败: {}", errorMsg(riskResponse));
                 report.setRiskAssessment(null);
             }
 
