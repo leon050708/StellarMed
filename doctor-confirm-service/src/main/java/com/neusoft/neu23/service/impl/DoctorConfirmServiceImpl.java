@@ -120,12 +120,29 @@ public class DoctorConfirmServiceImpl implements DoctorConfirmService {
             }
 
             // 步骤6: 调用 prescription-ai-service - 处方建议
-            log.info("步骤6: 调用处方建议服务");
-            PrescriptionGenerateRequest prescriptionRequest = new PrescriptionGenerateRequest();
-            prescriptionRequest.setPatientId(patientId);
-            prescriptionRequest.setSessionId(sessionId);
-            ApiResponse<PrescriptionGenerateResponse> prescriptionResponse = safeFeignCall("prescription-ai-service",
-                    () -> prescriptionAiClient.generate(prescriptionRequest));
+            // 优先使用查询接口（利用Redis缓存），如果没有数据再生成
+            log.info("步骤6: 调用处方建议服务（优先查询，利用Redis缓存）");
+            ApiResponse<PrescriptionGenerateResponse> prescriptionResponse = null;
+            
+            // 先尝试查询处方（利用Redis缓存）
+            prescriptionResponse = safeFeignCall("prescription-ai-service#query",
+                    () -> prescriptionAiClient.query(patientId, sessionId));
+            
+            // 如果查询失败或没有数据，再尝试生成
+            if (!isSuccess(prescriptionResponse) || 
+                (prescriptionResponse.getData() != null && 
+                 (prescriptionResponse.getData().getPrescriptions() == null || 
+                  prescriptionResponse.getData().getPrescriptions().isEmpty()))) {
+                log.info("处方查询无数据，尝试生成新处方");
+                PrescriptionGenerateRequest prescriptionRequest = new PrescriptionGenerateRequest();
+                prescriptionRequest.setPatientId(patientId);
+                prescriptionRequest.setSessionId(sessionId);
+                prescriptionResponse = safeFeignCall("prescription-ai-service#generate",
+                        () -> prescriptionAiClient.generate(prescriptionRequest));
+            } else {
+                log.info("从Redis缓存或数据库获取处方数据成功");
+            }
+            
             if (isSuccess(prescriptionResponse)) {
                 List<AiPrescription> prescriptions = prescriptionResponse.getData().getPrescriptions();
                 report.setPrescriptions(prescriptions != null ? prescriptions : List.of());
