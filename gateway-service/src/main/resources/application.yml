@@ -93,4 +93,4 @@ spring:
         - id: prescription-ai-service
           uri: lb://prescription-ai-service
           predicates:
-            - Path=/api/prescription/**
+            - Path=/api/ai/prescriptions/**

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/prescription")
+@RequestMapping("/api/ai")
 public class PrescriptionController {
 
     @Autowired
@@ -27,7 +27,7 @@ public class PrescriptionController {
      * @param request 处方生成请求
      * @return 处方生成响应
      */
-    @PostMapping("/generate")
+    @PostMapping("prescriptions/generate")
     public ApiResponse<PrescriptionGenerateResponse> generatePrescription(
             @RequestBody PrescriptionGenerateRequest request) {
 
