@@ -59,6 +59,34 @@ public class PatientController {
     }
 
     /**
+     * 获取会话列表
+     * 支持按患者ID查询，如果不传patientId则返回所有会话
+     */
+    @GetMapping("/sessions")
+    public ApiResponse<java.util.List<com.assist.common.entity.Session>> getSessions(
+            @RequestParam(required = false) Integer patientId) {
+        if (patientId != null) {
+            java.util.List<com.assist.common.entity.Session> sessions = sessionService.getSessionsByPatientId(patientId);
+            return ApiResponse.success(sessions);
+        } else {
+            java.util.List<com.assist.common.entity.Session> sessions = sessionService.getAllSessions();
+            return ApiResponse.success(sessions);
+        }
+    }
+
+    /**
+     * 根据会话ID获取会话详情
+     */
+    @GetMapping("/sessions/{sessionId}")
+    public ApiResponse<com.assist.common.entity.Session> getSessionById(@PathVariable Integer sessionId) {
+        com.assist.common.entity.Session session = sessionService.getSessionById(sessionId);
+        if (session == null) {
+            return ApiResponse.error("会话不存在");
+        }
+        return ApiResponse.success(session);
+    }
+
+    /**
      * 关闭会话
      */
     @PatchMapping("/sessions/{sessionId}/close")

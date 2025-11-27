@@ -7,8 +7,10 @@ import com.assist.patient.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 会话服务实现
@@ -62,6 +64,29 @@ public class SessionServiceImpl implements SessionService {
             session.setStatus(SessionStatusEnum.COMPLETED.name());
             sessionMapper.updateById(session);
         }
+    }
+
+    @Override
+    public List<Session> getSessionsByPatientId(Integer patientId) {
+        log.info("查询患者会话列表: patientId={}", patientId);
+        LambdaQueryWrapper<Session> wrapper = new LambdaQueryWrapper<Session>()
+                .eq(Session::getPatientId, patientId)
+                .orderByDesc(Session::getCreatedTime);
+        return sessionMapper.selectList(wrapper);
+    }
+
+    @Override
+    public List<Session> getAllSessions() {
+        log.info("查询所有会话列表");
+        LambdaQueryWrapper<Session> wrapper = new LambdaQueryWrapper<Session>()
+                .orderByDesc(Session::getCreatedTime);
+        return sessionMapper.selectList(wrapper);
+    }
+
+    @Override
+    public Session getSessionById(Integer sessionId) {
+        log.info("查询会话详情: sessionId={}", sessionId);
+        return sessionMapper.selectById(sessionId);
     }
 }
 
