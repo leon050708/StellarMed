@@ -5,6 +5,21 @@ spring:
   application:
     name: gateway-service
 
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:  # 如果 Redis 设置了密码，请在这里填写
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
   cloud:
     nacos:
       discovery:
@@ -58,6 +73,11 @@ spring:
           uri: lb://doctor-confirm-service
           predicates:
             - Path=/api/doctor-confirm/**
+        # 2.1 医生登录和患者查询
+        - id: doctor-service
+          uri: lb://doctor-confirm-service
+          predicates:
+            - Path=/api/doctor/**
 
         # --- 以下为 AI 服务路由 ---
 

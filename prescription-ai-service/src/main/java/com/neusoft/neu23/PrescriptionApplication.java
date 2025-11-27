@@ -10,7 +10,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * 
  * @author StellarMed
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.assist", "com.neusoft.neu23"})
 @EnableDiscoveryClient
 @MapperScan("com.neusoft.neu23.mapper")
 public class PrescriptionApplication {

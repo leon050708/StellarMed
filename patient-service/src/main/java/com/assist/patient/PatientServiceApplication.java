@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * 患者与会话服务启动类
  * 核心编排服务，负责调用所有AI服务
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.assist", "com.assist.patient"})
 @EnableFeignClients
 @MapperScan("com.assist.patient.mapper")
 public class PatientServiceApplication {

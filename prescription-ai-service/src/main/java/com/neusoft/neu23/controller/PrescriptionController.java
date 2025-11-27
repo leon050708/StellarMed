@@ -63,7 +63,7 @@ public class PrescriptionController {
      * @param sessionId 会话ID
      * @return 处方生成响应
      */
-    @GetMapping("/query")
+    @GetMapping("/prescriptions/query")
     public ApiResponse<PrescriptionGenerateResponse> getPrescription(
             @RequestParam Integer patientId,
             @RequestParam Integer sessionId) {

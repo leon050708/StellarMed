@@ -7,6 +7,7 @@ import com.assist.patient.service.SessionService;
 import com.assist.patient.service.ChatService;
 import com.assist.patient.service.SymptomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -21,6 +22,7 @@ public class PatientController {
     private final SessionService sessionService;
     private final ChatService chatService;
     private final SymptomService symptomService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 创建或更新患者
@@ -139,6 +141,50 @@ public class PatientController {
     public ApiResponse<Integer> recordSymptom(@RequestBody com.assist.common.entity.SymptomRecord symptomRecord) {
         Integer symptomId = symptomService.saveSymptom(symptomRecord);
         return ApiResponse.success(symptomId);
+    }
+
+    /**
+     * Redis 测试接口 - 存储数据
+     * 支持两种方式传参：
+     * 1. Query Parameters: ?key=xxx&value=xxx
+     * 2. Request Body (JSON): {"key":"xxx","value":"xxx"}
+     */
+    @PostMapping("/redis/test/set")
+    public ApiResponse<String> redisTestSet(
+            @RequestParam(required = false) String key,
+            @RequestParam(required = false) String value,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        // 优先使用 Request Body，如果没有则使用 Query Parameters
+        String finalKey = (body != null && body.containsKey("key")) ? body.get("key") : key;
+        String finalValue = (body != null && body.containsKey("value")) ? body.get("value") : value;
+        
+        if (finalKey == null || finalValue == null) {
+            return ApiResponse.error("参数错误：请提供 key 和 value 参数（可通过 Query Parameters 或 Request Body 传递）");
+        }
+        
+        redisTemplate.opsForValue().set(finalKey, finalValue);
+        return ApiResponse.success("数据已存储到 Redis: " + finalKey + " = " + finalValue);
+    }
+
+    /**
+     * Redis 测试接口 - 获取数据
+     */
+    @GetMapping("/redis/test/get")
+    public ApiResponse<Object> redisTestGet(@RequestParam String key) {
+        Object value = redisTemplate.opsForValue().get(key);
+        if (value == null) {
+            return ApiResponse.error("Key 不存在: " + key);
+        }
+        return ApiResponse.success(value);
+    }
+
+    /**
+     * Redis 测试接口 - 查看所有键
+     */
+    @GetMapping("/redis/test/keys")
+    public ApiResponse<java.util.Set<String>> redisTestKeys(@RequestParam(required = false, defaultValue = "*") String pattern) {
+        java.util.Set<String> keys = redisTemplate.keys(pattern);
+        return ApiResponse.success(keys);
     }
 
 }
